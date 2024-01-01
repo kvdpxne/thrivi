@@ -18,19 +18,23 @@ public class EventManager {
         continue;
       }
 
-      if (!method.canAccess(listenable)) {
+      if (!method.isAccessible()) {
         method.setAccessible(true);
       }
 
-      var eventClass = ((Class<? extends Event>) method.getParameterTypes()[0]);
-      var eventHandler = method.getAnnotation(EventHandler.class);
+      final Class<? extends Event> eventClass = ((Class<? extends Event>)
+        method.getParameterTypes()[0]);
+      final EventHandler eventHandler = method.getAnnotation(
+        EventHandler.class);
 
-      var invokableEventHandler = events.getOrDefault(eventClass, new ArrayList<>());
-      invokableEventHandler.add(new EventHook(listenable, method,
+      final List<EventHook> invokableEventHandlers = this.events.getOrDefault(
+        eventClass, new ArrayList<>()
+      );
+      invokableEventHandlers.add(new EventHook(listenable, method,
         eventHandler));
-
-      invokableEventHandler.sort(Comparator.comparingInt(EventHook::getPriority));
-      events.put(eventClass, invokableEventHandler);
+      invokableEventHandlers.sort(Comparator.comparingInt(
+        EventHook::getPriority));
+      this.events.put(eventClass, invokableEventHandlers);
     }
   }
 
@@ -41,16 +45,16 @@ public class EventManager {
   }
 
   public void callEvent(Event event) {
-    var targets = events.get(event.getClass());
-    if (null == targets) {
+    final List<EventHook> eventHooks = this.events.get(event.getClass());
+    if (null == eventHooks || eventHooks.isEmpty()) {
       return;
     }
-    targets.forEach(target -> {
-      if (!target.isIgnoreCancelled()) {
+    eventHooks.forEach(eventHook -> {
+      if (!eventHook.isIgnoreCancelled()) {
         return;
       }
       try {
-        target.getMethod().invoke(target.getListener(), event);
+        eventHook.getMethod().invoke(eventHook.getListener(), event);
       } catch (final Throwable cause) {
         cause.printStackTrace();
       }
