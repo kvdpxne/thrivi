@@ -50,7 +50,7 @@ public class EventManager {
       return;
     }
     eventHooks.forEach(eventHook -> {
-      if (!eventHook.isIgnoreCancelled()) {
+      if (eventHook.isIgnoreCancelled()) {
         return;
       }
       try {
