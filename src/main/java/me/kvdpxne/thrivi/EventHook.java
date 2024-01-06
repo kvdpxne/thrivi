@@ -1,34 +1,29 @@
 package me.kvdpxne.thrivi;
 
-import java.lang.reflect.Method;
-
-public class EventHook {
-
-  private final Method method;
-  private final Listenable listener;
-  private final int priority;
+public class EventHook<E extends Event> {
+  private final EventHandler<E> eventHandler;
   private final boolean ignoreCancelled;
+  private final int priority;
 
-  public EventHook(Listenable listener, Method method, EventHandler handler) {
-    this.listener = listener;
-    this.method = method;
-    this.priority = handler.priority();
-    this.ignoreCancelled = handler.ignoreCancelled();
+  public EventHook(
+    final EventHandler<E> eventHandler,
+    final boolean ignoreCancelled,
+    final int priority
+  ) {
+    this.eventHandler = eventHandler;
+    this.ignoreCancelled = ignoreCancelled;
+    this.priority = priority;
   }
 
-  public Method getMethod() {
-    return method;
-  }
-
-  public Listenable getListener() {
-    return listener;
-  }
-
-  public int getPriority() {
-    return priority;
+  public EventHandler<E> getEventHandler() {
+    return this.eventHandler;
   }
 
   public boolean isIgnoreCancelled() {
-    return ignoreCancelled;
+    return this.ignoreCancelled;
+  }
+
+  public int getPriority() {
+    return this.priority;
   }
 }
