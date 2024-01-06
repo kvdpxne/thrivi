@@ -7,12 +7,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public enum BuiltInEventManager implements EventManager {
+public enum BuiltInEventManager
+  implements EventManager {
 
   INSTANCE;
 
-  public final Map<Class<? extends Event>, List<EventHook<? super Event>>> events;
+  private final Logger logger = LoggerFactory.getLogger(EventManager.class);
+  private final Map<Class<? extends Event>, List<EventHook<? super Event>>> events;
 
   BuiltInEventManager() {
     this.events = new HashMap<>();
@@ -24,6 +28,19 @@ public enum BuiltInEventManager implements EventManager {
       .stream()
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
+  }
+
+  @Override
+  public void addEvent(final Class<? extends Event> eventClass) {
+    this.events.putIfAbsent(
+      eventClass,
+      new CopyOnWriteArrayList<>()
+    );
+  }
+
+  @Override
+  public void removeEvent(final Class<? extends Event> eventClass) {
+    this.events.remove(eventClass);
   }
 
   @Override
@@ -61,14 +78,18 @@ public enum BuiltInEventManager implements EventManager {
     if (event instanceof Cancellable) {
       isCancelled = ((Cancellable) event).isCancelled();
     }
+
     for (final EventHook<? super Event> eventHook : eventHooks) {
+      // Skip event handling execution for these events that were canceled and
+      // are not flagged to ignore event cancellation.
       if (isCancelled && !eventHook.isIgnoreCancelled()) {
         continue;
       }
+
       try {
         eventHook.getEventHandler().handle(event);
-      } catch (final Throwable cause) {
-        cause.printStackTrace();
+      } catch (final Throwable exception) {
+        logger.error("Exception while executing handler.", exception.getCause());
       }
     }
     return event;

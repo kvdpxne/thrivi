@@ -1,6 +1,8 @@
 package me.kvdpxne.thrivi;
 
-public class CancellableEvent extends Event implements Cancellable {
+public class CancellableEvent
+  extends Event
+  implements Cancellable {
 
   private boolean cancelled;
 

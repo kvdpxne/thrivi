@@ -1,11 +1,14 @@
 package me.kvdpxne.thrivi;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface EventManager {
 
-  <E extends Event> List<EventHook<? super Event>> getRegisteredEventHooks();
+  List<EventHook<? super Event>> getRegisteredEventHooks();
+
+  void addEvent(final Class<? extends Event> eventClass);
+
+  void removeEvent(final Class<? extends Event> eventClass);
 
   <E extends Event> void registerEventHook(
     final Class<? extends Event> eventClass,

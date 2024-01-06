@@ -1,1 +1,23 @@
-rootProject.name = 'thrivi'
+pluginManagement {
+
+  repositories {
+    gradlePluginPortal()
+  }
+}
+
+dependencyResolutionManagement {
+
+  versionCatalogs {
+    def fileName = "libraries"
+    create(fileName) {
+      from(files("./gradle/${fileName}.versions.toml"))
+    }
+  }
+
+  repositories {
+    mavenCentral()
+    mavenLocal()
+  }
+}
+
+rootProject.name = "thrivi"
