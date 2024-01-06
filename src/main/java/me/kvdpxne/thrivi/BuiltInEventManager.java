@@ -23,7 +23,7 @@ public enum BuiltInEventManager implements EventManager {
     return this.events.values()
       .stream()
       .flatMap(Collection::stream)
-      .collect(Collectors.toUnmodifiableList());
+      .collect(Collectors.toList());
   }
 
   @Override
