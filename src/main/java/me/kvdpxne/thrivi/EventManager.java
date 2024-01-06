@@ -1,63 +1,26 @@
 package me.kvdpxne.thrivi;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class EventManager {
+public interface EventManager {
 
-  private final Map<Class<? extends Event>, List<EventHook>> events =
-    new HashMap<>();
+  List<EventHook<? super Event>> getRegisteredEventHooks();
 
-  public void registerListener(Listenable listenable) {
-    for (Method method : listenable.getClass().getDeclaredMethods()) {
-      if (!method.isAnnotationPresent(EventHandler.class) || 1 != method.getParameterTypes().length) {
-        continue;
-      }
+  void addEvent(final Class<? extends Event> eventClass);
 
-      if (!method.isAccessible()) {
-        method.setAccessible(true);
-      }
+  void removeEvent(final Class<? extends Event> eventClass);
 
-      final Class<? extends Event> eventClass = ((Class<? extends Event>)
-        method.getParameterTypes()[0]);
-      final EventHandler eventHandler = method.getAnnotation(
-        EventHandler.class);
+  <E extends Event> void registerEventHook(
+    final Class<? extends Event> eventClass,
+    final EventHook<E> eventHook
+  );
 
-      final List<EventHook> invokableEventHandlers = this.events.getOrDefault(
-        eventClass, new ArrayList<>()
-      );
-      invokableEventHandlers.add(new EventHook(listenable, method,
-        eventHandler));
-      invokableEventHandlers.sort(Comparator.comparingInt(
-        EventHook::getPriority));
-      this.events.put(eventClass, invokableEventHandlers);
-    }
-  }
+  <E extends Event> void unregisterEventHook(
+    final Class<? extends Event> eventClass,
+    final EventHook<E> eventHook
+  );
 
-  public void unregisterListener(Listenable listenable) {
-    events.forEach((key, value) -> {
-      value.removeIf(hok -> hok.getListener().equals(listenable));
-    });
-  }
-
-  public void callEvent(Event event) {
-    final List<EventHook> eventHooks = this.events.get(event.getClass());
-    if (null == eventHooks || eventHooks.isEmpty()) {
-      return;
-    }
-    eventHooks.forEach(eventHook -> {
-      if (eventHook.isIgnoreCancelled()) {
-        return;
-      }
-      try {
-        eventHook.getMethod().invoke(eventHook.getListener(), event);
-      } catch (final Throwable cause) {
-        cause.printStackTrace();
-      }
-    });
-  }
+  <E extends Event> E callEvent(
+    final E event
+  );
 }
