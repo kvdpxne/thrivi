@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ public enum BuiltInEventManager
 
   INSTANCE;
 
-  private final Logger logger = LoggerFactory.getLogger(EventManager.class);
+  private static final Logger logger = LoggerFactory.getLogger(EventManager.class);
   private final Map<Class<? extends Event>, List<EventHook<? super Event>>> events;
 
   BuiltInEventManager() {
@@ -49,6 +50,12 @@ public enum BuiltInEventManager
     final EventHook<E> eventHook
   ) {
     final List<EventHook<? super Event>> handlers = this.events.get(eventClass);
+    if (null == handlers) {
+      throw new EventHookNotFoundException(
+        "The event \"%s\" was not registered.",
+        eventClass.getName()
+      );
+    }
     final EventHook<? extends Event> hook = eventHook;
     if (!handlers.contains(hook)) {
       handlers.add((EventHook<? super Event>) hook);
@@ -69,27 +76,41 @@ public enum BuiltInEventManager
   }
 
   @Override
-  public <E extends Event> E callEvent(final E event) {
-    final List<EventHook<? super Event>> eventHooks = this.events.get(event.getClass());
-    if (null == eventHooks) {
-      return event;
+  public <E extends Event> E callEvent(
+    final E event
+  ) {
+    Objects.requireNonNull(
+      event,
+      "The passed parameter named event is null."
+    );
+    final Class<? extends Event> clazz = event.getClass();
+    final List<EventHook<? super Event>> hooks = this.events.get(clazz);
+    //
+    //
+    if (null == hooks) {
+      throw new EventHookNotFoundException(
+        "The event \"%s\" was not registered.",
+        clazz.getName()
+      );
     }
     boolean isCancelled = false;
     if (event instanceof Cancellable) {
       isCancelled = ((Cancellable) event).isCancelled();
     }
-
-    for (final EventHook<? super Event> eventHook : eventHooks) {
+    for (final EventHook<? super Event> hook : hooks) {
       // Skip event handling execution for these events that were canceled and
       // are not flagged to ignore event cancellation.
-      if (isCancelled && !eventHook.isIgnoreCancelled()) {
+      if (isCancelled && !hook.isIgnoreCancelled()) {
         continue;
       }
-
       try {
-        eventHook.getEventHandler().handle(event);
+        //
+        hook.handle(event);
       } catch (final Throwable exception) {
-        logger.error("Exception while executing handler.", exception.getCause());
+        logger.error(
+          "Exception while executing handler.",
+          exception.getCause()
+        );
       }
     }
     return event;

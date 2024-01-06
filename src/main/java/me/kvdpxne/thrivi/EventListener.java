@@ -21,7 +21,7 @@ public interface EventListener {
   ) {
     return this.handler(
       ignoreCancelled,
-      StandardEventPriorities.NORMAL,
+      EventPriorities.NORMAL,
       handler
     );
   }
@@ -42,7 +42,7 @@ public interface EventListener {
   ) {
     return this.handler(
       false,
-      StandardEventPriorities.NORMAL,
+      EventPriorities.NORMAL,
       handler
     );
   }

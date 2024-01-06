@@ -1,6 +1,7 @@
 package me.kvdpxne.thrivi;
 
 public class EventHook<E extends Event> {
+
   private final EventHandler<E> eventHandler;
   private final boolean ignoreCancelled;
   private final int priority;
@@ -15,8 +16,8 @@ public class EventHook<E extends Event> {
     this.priority = priority;
   }
 
-  public EventHandler<E> getEventHandler() {
-    return this.eventHandler;
+  public void handle(final E event) {
+    this.eventHandler.handle(event);
   }
 
   public boolean isIgnoreCancelled() {
